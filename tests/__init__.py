@@ -1,1 +1,1 @@
-# Tests for memvid library
+# Tests for nsm library

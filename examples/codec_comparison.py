@@ -17,11 +17,11 @@ sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(Path.cwd()))
 
 try:
-    from memvid.encoder import MemvidEncoder
-    from memvid.config import codec_parameters, DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP
-    print(f"✅ Imported MemvidEncoder from: {project_root}")
+    from nsm.encoder import NSMEncoder
+    from nsm.config import codec_parameters, DEFAULT_CHUNK_SIZE, DEFAULT_OVERLAP
+    print(f"✅ Imported NSMEncoder from: {project_root}")
 except ImportError as e:
-    print(f"❌ Could not import MemvidEncoder from {project_root}")
+    print(f"❌ Could not import NSMEncoder from {project_root}")
     print(f"   Error: {e}")
     print(f"   Current working directory: {Path.cwd()}")
     print(f"   Python path includes:")
@@ -29,9 +29,9 @@ except ImportError as e:
         print(f"     {p}")
     print()
     print("Solutions:")
-    print("1. Run from project root: cd memvid && python examples/codec_comparison.py ...")
+    print("1. Run from project root: cd nsm && python examples/codec_comparison.py ...")
     print("2. Install package: pip install -e .")
-    print("3. Set PYTHONPATH: export PYTHONPATH=/path/to/memvid:$PYTHONPATH")
+    print("3. Set PYTHONPATH: export PYTHONPATH=/path/to/nsm:$PYTHONPATH")
     sys.exit(1)
 
 
@@ -48,7 +48,7 @@ def format_size(bytes_size):
 def get_available_codecs(encoder):
     """Get list of available codecs and their backends - FIXED"""
     # Import the full codec mapping, not just the default config
-    from memvid.config import codec_parameters
+    from nsm.config import codec_parameters
 
     available_codecs = {}
 
@@ -71,7 +71,7 @@ def load_user_data(input_path, chunk_size=DEFAULT_CHUNK_SIZE, overlap=DEFAULT_OV
         print(f"❌ Path not found: {input_path}")
         return None, None
 
-    encoder = MemvidEncoder()
+    encoder = NSMEncoder()
 
     # Handle directory vs single file
     if input_path.is_dir():
@@ -187,11 +187,11 @@ def test_codec(encoder, codec, name_stem, output_dir):
     print(f"\n🎬 Testing {codec.upper()} encoding...")
 
     # Create fresh encoder copy to avoid state issues
-    test_encoder = MemvidEncoder()
+    test_encoder = NSMEncoder()
     test_encoder.chunks = encoder.chunks.copy()
 
     # Determine file extension from full codec mapping - FIXED
-    file_ext = codec_parameters[codec]["video_file_type"]
+    file_ext = codec_parameters[codec]["memory_file_type"]
 
     # FIX: Add missing dot before extension
     output_path = output_dir / f"{name_stem}_{codec}.{file_ext}"
@@ -200,7 +200,7 @@ def test_codec(encoder, codec, name_stem, output_dir):
     start_time = time.time()
 
     try:
-        stats = test_encoder.build_video(
+        stats = test_encoder.build_memory(
             str(output_path),
             str(index_path),
             codec=codec,
@@ -367,7 +367,7 @@ def print_comparison_table(data_info, results, codecs):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Compare multiple video codecs on YOUR data",
+        description="Compare multiple memory codecs on YOUR data",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
@@ -383,7 +383,7 @@ def main():
 
     args = parser.parse_args()
 
-    print("🎥 Memvid Multi-Codec Comparison Tool")
+    print("🎥 NSM Multi-Codec Comparison Tool")
     print("=" * 50)
 
     # Load user data

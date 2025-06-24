@@ -1,5 +1,5 @@
 """
-MemvidEncoder - Unified encoding with native OpenCV and FFmpeg (Docker/native) support
+NSMEncoder - Unified encoding with native OpenCV and FFmpeg (Docker/native) support
 """
 
 import json
@@ -20,9 +20,9 @@ from .docker_manager import DockerManager
 
 logger = logging.getLogger(__name__)
 
-class MemvidEncoder:
+class NSMEncoder:
     """
-    Unified MemvidEncoder with clean separation between encoding logic and Docker management.
+    Unified NSMEncoder with clean separation between encoding logic and Docker management.
     Supports both native OpenCV encoding and FFmpeg encoding (native or Docker-based).
     """
 
@@ -153,16 +153,16 @@ class MemvidEncoder:
             logger.error(f"Error processing EPUB {epub_path}: {e}")
             raise
 
-    def create_video_writer(self, output_path: str, codec: str = VIDEO_CODEC) -> cv2.VideoWriter:
+    def create_memory_writer(self, output_path: str, codec: str = VIDEO_CODEC) -> cv2.MemoryWriter:
         """
-        Create OpenCV video writer for native encoding
+        Create OpenCV memory writer for native encoding
 
         Args:
-            output_path: Path to output video file
-            codec: Video codec for OpenCV
+            output_path: Path to output memory file
+            codec: Memory codec for OpenCV
 
         Returns:
-            cv2.VideoWriter instance
+            cv2.MemoryWriter instance
         """
         from .config import codec_parameters
 
@@ -179,12 +179,12 @@ class MemvidEncoder:
         }
 
         opencv_codec = opencv_codec_map.get(codec, codec)
-        fourcc = cv2.VideoWriter_fourcc(*opencv_codec)
+        fourcc = cv2.MemoryWriter_fourcc(*opencv_codec)
 
-        return cv2.VideoWriter(
+        return cv2.MemoryWriter(
             output_path,
             fourcc,
-            codec_config["video_fps"],
+            codec_config["memory_fps"],
             (codec_config["frame_width"], codec_config["frame_height"])
         )
 
@@ -234,18 +234,18 @@ class MemvidEncoder:
         ffmpeg_codec = ffmpeg_codec_map.get(codec, codec)
 
         # Ensure output file has correct extension
-        expected_ext = codec_config["video_file_type"]
+        expected_ext = codec_config["memory_file_type"]
         if not str(output_file).endswith(expected_ext):
             output_file = output_file.with_suffix(expected_ext)
 
         # Build base command using config
         cmd = [
             'ffmpeg', '-y',
-            '-framerate', str(codec_config["video_fps"]),
+            '-framerate', str(codec_config["memory_fps"]),
             '-i', str(frames_dir / 'frame_%06d.png'),
             '-c:v', ffmpeg_codec,
-            '-preset', codec_config["video_preset"],
-            '-crf', str(codec_config["video_crf"]),
+            '-preset', codec_config["memory_preset"],
+            '-crf', str(codec_config["memory_crf"]),
         ]
 
         # Apply scaling and pixel format based on codec
@@ -257,8 +257,8 @@ class MemvidEncoder:
             cmd.extend(['-pix_fmt', codec_config["pix_fmt"]])
 
             # Add profile if specified in config
-            if codec_config.get("video_profile"):
-                cmd.extend(['-profile:v', codec_config["video_profile"]])
+            if codec_config.get("memory_profile"):
+                cmd.extend(['-profile:v', codec_config["memory_profile"]])
         else:
             # Use pixel format from config for other codecs
             cmd.extend(['-pix_fmt', codec_config["pix_fmt"]])
@@ -271,12 +271,12 @@ class MemvidEncoder:
         print(f"🎬 FFMPEG ENCODING SUMMARY:")
         print(f"   🎥 Codec Config:")
         print(f"      • codec: {codec}")
-        print(f"      • file_type: {codec_config.get('video_file_type', 'unknown')}")
+        print(f"      • file_type: {codec_config.get('memory_file_type', 'unknown')}")
         print(f"      • fps: {codec_config.get('fps', 'default')}")
         print(f"      • crf: {codec_config.get('crf', 'default')}")
         print(f"      • height: {codec_config.get('frame_height', 'default')}")
         print(f"      • width: {codec_config.get('frame_width', 'default')}")
-        print(f"      • preset: {codec_config.get('video_preset', 'default')}")
+        print(f"      • preset: {codec_config.get('memory_preset', 'default')}")
         print(f"      • pix_fmt: {codec_config.get('pix_fmt', 'default')}")
         print(f"      • extra_ffmpeg_args: {codec_config.get('extra_ffmpeg_args', 'default')}")
 
@@ -304,12 +304,12 @@ class MemvidEncoder:
     def _encode_with_opencv(self, frames_dir: Path, output_file: Path, codec: str,
                             show_progress: bool = True) -> Dict[str, Any]:
         """
-        Encode video using native OpenCV
+        Encode memory using native OpenCV
         
         Args:
             frames_dir: Directory containing PNG frames
-            output_file: Output video file path
-            codec: Video codec
+            output_file: Output memory file path
+            codec: Memory codec
             show_progress: Show progress bar
             
         Returns:
@@ -325,8 +325,8 @@ class MemvidEncoder:
         if show_progress:
             logger.info(f"Encoding with OpenCV using {codec} codec...")
 
-        # Create video writer
-        writer = self.create_video_writer(str(output_file), codec)
+        # Create memory writer
+        writer = self.create_memory_writer(str(output_file), codec)
         frame_numbers = []
 
         try:
@@ -335,7 +335,7 @@ class MemvidEncoder:
             frame_iter = enumerate(frame_files)
 
             if show_progress:
-                frame_iter = tqdm(frame_iter, total=len(frame_files), desc="Writing video frames")
+                frame_iter = tqdm(frame_iter, total=len(frame_files), desc="Writing memory frames")
 
             for frame_num, frame_file in frame_iter:
                 # Load frame
@@ -357,9 +357,9 @@ class MemvidEncoder:
                 "backend": "opencv",
                 "codec": codec,
                 "total_frames": len(frame_numbers),
-                "video_size_mb": output_file.stat().st_size / (1024 * 1024) if output_file.exists() else 0,
-                "fps": codec_config["video_fps"],
-                "duration_seconds": len(frame_numbers) / codec_config["video_fps"]
+                "memory_size_mb": output_file.stat().st_size / (1024 * 1024) if output_file.exists() else 0,
+                "fps": codec_config["memory_fps"],
+                "duration_seconds": len(frame_numbers) / codec_config["memory_fps"]
             }
 
         finally:
@@ -368,12 +368,12 @@ class MemvidEncoder:
     def _encode_with_ffmpeg(self, frames_dir: Path, output_file: Path, codec: str,
                             show_progress: bool = True, auto_build_docker: bool = True) -> Dict[str, Any]:
         """
-        Encode video using FFmpeg (native or Docker)
+        Encode memory using FFmpeg (native or Docker)
         
         Args:
             frames_dir: Directory containing PNG frames
-            output_file: Output video file path
-            codec: Video codec
+            output_file: Output memory file path
+            codec: Memory codec
             show_progress: Show progress bar
             auto_build_docker: Whether to auto-build Docker container if needed
             
@@ -399,8 +399,8 @@ class MemvidEncoder:
             result.update({
                 "codec": codec,
                 "total_frames": frame_count,
-                "fps": codec_parameters[codec]["video_fps"],
-                "duration_seconds": frame_count / codec_parameters[codec]["video_fps"]
+                "fps": codec_parameters[codec]["memory_fps"],
+                "duration_seconds": frame_count / codec_parameters[codec]["memory_fps"]
             })
 
             return result
@@ -419,22 +419,22 @@ class MemvidEncoder:
                 "backend": "native_ffmpeg",
                 "codec": codec,
                 "total_frames": frame_count,
-                "video_size_mb": output_file.stat().st_size / (1024 * 1024) if output_file.exists() else 0,
-                "fps": codec_parameters[codec]["video_fps"],
-                "duration_seconds": frame_count / codec_parameters[codec]["video_fps"]
+                "memory_size_mb": output_file.stat().st_size / (1024 * 1024) if output_file.exists() else 0,
+                "fps": codec_parameters[codec]["memory_fps"],
+                "duration_seconds": frame_count / codec_parameters[codec]["memory_fps"]
             }
 
 
-    def build_video(self, output_file: str, index_file: str,
+    def build_memory(self, output_file: str, index_file: str,
                     codec: str = VIDEO_CODEC, show_progress: bool = True,
                     auto_build_docker: bool = True, allow_fallback: bool = True) -> Dict[str, Any]:
         """
-        Build QR code video and index from chunks with unified codec handling
+        Build QR code memory and index from chunks with unified codec handling
 
         Args:
-            output_file: Path to output video file
+            output_file: Path to output memory file
             index_file: Path to output index file
-            codec: Video codec ('mp4v', 'h265', 'h264', etc.)
+            codec: Memory codec ('mp4v', 'h265', 'h264', etc.)
             show_progress: Show progress bar
             auto_build_docker: Whether to auto-build Docker if needed
             allow_fallback: Whether to fall back to MP4V if advanced codec fails
@@ -452,7 +452,7 @@ class MemvidEncoder:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         index_path.parent.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Building video with {len(self.chunks)} chunks using {codec} codec")
+        logger.info(f"Building memory with {len(self.chunks)} chunks using {codec} codec")
 
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
@@ -491,15 +491,15 @@ class MemvidEncoder:
             # Finalize statistics
             stats.update({
                 "total_chunks": len(self.chunks),
-                "video_file": str(output_path),
+                "memory_file": str(output_path),
                 "index_file": str(index_path),
                 "index_stats": self.index_manager.get_stats()
             })
 
             if show_progress:
-                logger.info(f"Successfully built video: {output_path}")
-                logger.info(f"Video duration: {stats.get('duration_seconds', 0):.1f} seconds")
-                logger.info(f"Video size: {stats.get('video_size_mb', 0):.1f} MB")
+                logger.info(f"Successfully built memory: {output_path}")
+                logger.info(f"Memory duration: {stats.get('duration_seconds', 0):.1f} seconds")
+                logger.info(f"Memory size: {stats.get('memory_size_mb', 0):.1f} MB")
 
             return stats
 
@@ -532,7 +532,7 @@ class MemvidEncoder:
 
     @classmethod
     def from_file(cls, file_path: str, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP,
-                  config: Optional[Dict[str, Any]] = None) -> 'MemvidEncoder':
+                  config: Optional[Dict[str, Any]] = None) -> 'NSMEncoder':
         """
         Create encoder from text file
 
@@ -543,7 +543,7 @@ class MemvidEncoder:
             config: Optional configuration
 
         Returns:
-            MemvidEncoder instance with chunks loaded
+            NSMEncoder instance with chunks loaded
         """
         encoder = cls(config)
 
@@ -555,7 +555,7 @@ class MemvidEncoder:
 
     @classmethod
     def from_documents(cls, documents: List[str], chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP,
-                       config: Optional[Dict[str, Any]] = None) -> 'MemvidEncoder':
+                       config: Optional[Dict[str, Any]] = None) -> 'NSMEncoder':
         """
         Create encoder from list of documents
 
@@ -566,7 +566,7 @@ class MemvidEncoder:
             config: Optional configuration
 
         Returns:
-            MemvidEncoder instance with chunks loaded
+            NSMEncoder instance with chunks loaded
         """
         encoder = cls(config)
 

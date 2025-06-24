@@ -6,11 +6,11 @@ Soccer memory example using chat_with_memory
 import sys
 import os
 
-from memvid.config import VIDEO_FILE_TYPE
+from nsm.config import VIDEO_FILE_TYPE
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from memvid import MemvidEncoder, chat_with_memory
+from nsm import NSMEncoder, chat_with_memory
 
 # Soccer knowledge base
 soccer_chunks = [
@@ -36,18 +36,18 @@ soccer_chunks = [
     "Neymar's €222 million transfer from Barcelona to PSG in 2017 is still the world record."
 ]
 
-# Build memory video
-video_path = f"output/soccer_memory.{VIDEO_FILE_TYPE}"
+# Build memory memory
+memory_path = f"output/soccer_memory.{VIDEO_FILE_TYPE}"
 index_path = "output/soccer_memory_index.json"
 
 # Create output directory with subdirectory for sessions
 os.makedirs("output/soccer_chat", exist_ok=True)
 
-# Encode chunks to video
-encoder = MemvidEncoder()
+# Encode chunks to memory
+encoder = NSMEncoder()
 encoder.add_chunks(soccer_chunks)
-encoder.build_video(video_path, index_path)
-print(f"Created soccer memory video: {video_path}")
+encoder.build_memory(memory_path, index_path)
+print(f"Created soccer memory memory: {memory_path}")
 
 api_key = "your-api-key-here"
 if not api_key:
@@ -55,4 +55,4 @@ if not api_key:
     print("Without it, you'll only see raw context chunks.\n")
 
 # Chat with the memory - interactive session with custom session directory
-chat_with_memory(video_path, index_path, api_key=api_key, session_dir="output/soccer_chat")
+chat_with_memory(memory_path, index_path, api_key=api_key, session_dir="output/soccer_chat")

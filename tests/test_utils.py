@@ -8,7 +8,7 @@ from PIL import Image
 import tempfile
 import os
 
-from memvid.utils import (
+from nsm.utils import (
     encode_to_qr, decode_qr, chunk_text, qr_to_frame,
     save_index, load_index
 )
@@ -16,7 +16,7 @@ from memvid.utils import (
 
 def test_qr_encode_decode():
     """Test QR code encoding and decoding"""
-    test_data = "Hello, Memvid!"
+    test_data = "Hello, NSM!"
     
     # Encode to QR
     qr_image = encode_to_qr(test_data)

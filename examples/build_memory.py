@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Example: Create video memory and index from text data
+Example: Create memory memory and index from text data
 """
 
 import sys
 import os
 
-from memvid.config import VIDEO_FILE_TYPE
+from nsm.config import VIDEO_FILE_TYPE
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from memvid import MemvidEncoder
+from nsm import NSMEncoder
 import time
 
 
@@ -39,11 +39,11 @@ def main():
         "Voice cloning technology requires only 3 seconds of audio sample.",
     ]
     
-    print("Memvid Example: Building Video Memory")
+    print("NSM Example: Building Memory Memory")
     print("=" * 50)
     
     # Create encoder
-    encoder = MemvidEncoder()
+    encoder = NSMEncoder()
     
     # Add chunks
     print(f"\nAdding {len(chunks)} chunks to encoder...")
@@ -68,24 +68,24 @@ def main():
     print(f"  Total characters: {stats['total_characters']}")
     print(f"  Average chunk size: {stats['avg_chunk_size']:.1f} chars")
     
-    # Build video and index
+    # Build memory and index
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
     
-    video_file = os.path.join(output_dir, f"memory.{VIDEO_FILE_TYPE}]")
+    memory_file = os.path.join(output_dir, f"memory.{VIDEO_FILE_TYPE}]")
     index_file = os.path.join(output_dir, "memory_index.json")
     
-    print(f"\nBuilding video: {video_file}")
+    print(f"\nBuilding memory: {memory_file}")
     print(f"Building index: {index_file}")
     
     start_time = time.time()
-    build_stats = encoder.build_video(video_file, index_file, show_progress=True)
+    build_stats = encoder.build_memory(memory_file, index_file, show_progress=True)
     elapsed = time.time() - start_time
     
     print(f"\nBuild completed in {elapsed:.2f} seconds")
-    print(f"\nVideo stats:")
+    print(f"\nMemory stats:")
     print(f"  Duration: {build_stats['duration_seconds']:.1f} seconds")
-    print(f"  Size: {build_stats['video_size_mb']:.2f} MB")
+    print(f"  Size: {build_stats['memory_size_mb']:.2f} MB")
     print(f"  FPS: {build_stats['fps']}")
     print(f"  Chunks per second: {build_stats['total_chunks'] / elapsed:.1f}")
     
@@ -93,7 +93,7 @@ def main():
     for key, value in build_stats['index_stats'].items():
         print(f"  {key}: {value}")
     
-    print("\nSuccess! Video memory created.")
+    print("\nSuccess! Memory memory created.")
     print(f"\nYou can now use this memory with:")
     print(f"  python examples/chat_memory.py")
 

@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Example: Interactive conversation using MemvidChat (Fixed)
+Example: Interactive conversation using NSMChat (Fixed)
 """
 
 import sys
 import os
 
-from memvid.config import VIDEO_FILE_TYPE
+from nsm.config import VIDEO_FILE_TYPE
 
 # Set environment variable before importing transformers
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from memvid import MemvidChat
+from nsm import NSMChat
 import time
 
 
@@ -28,20 +28,20 @@ def print_search_results(results):
 
 
 def main():
-    print("Memvid Example: Interactive Chat with Memory")
+    print("NSM Example: Interactive Chat with Memory")
     print("=" * 50)
     
     # Check if memory files exist
-    video_file = F"output/memory.{VIDEO_FILE_TYPE}"
+    memory_file = F"output/memory.{VIDEO_FILE_TYPE}"
     index_file = "output/memory_index.json"
     
-    if not os.path.exists(video_file) or not os.path.exists(index_file):
+    if not os.path.exists(memory_file) or not os.path.exists(index_file):
         print("\nError: Memory files not found!")
         print("Please run 'python examples/build_memory.py' first to create the memory.")
         return
     
     # Initialize chat
-    print(f"\nLoading memory from: {video_file}")
+    print(f"\nLoading memory from: {memory_file}")
     
     # You can set OPENAI_API_KEY environment variable or pass it here
     api_key = os.getenv("OPENAI_API_KEY", "")
@@ -49,7 +49,7 @@ def main():
         print("\nNote: No OpenAI API key found. Chat will work in context-only mode.")
         print("Set OPENAI_API_KEY environment variable to enable full chat capabilities.")
     
-    chat = MemvidChat(video_file, index_file, llm_api_key=api_key)
+    chat = NSMChat(memory_file, index_file, llm_api_key=api_key)
     chat.start_session()
     
     # Get stats
@@ -86,7 +86,7 @@ def main():
                 print("\nSystem Statistics:")
                 print(f"  Messages: {stats['message_count']}")
                 print(f"  Cache size: {stats['retriever_stats']['cache_size']}")
-                print(f"  Video frames: {stats['retriever_stats']['total_frames']}")
+                print(f"  Memory frames: {stats['retriever_stats']['total_frames']}")
                 continue
                 
             elif user_input.lower() == 'export':

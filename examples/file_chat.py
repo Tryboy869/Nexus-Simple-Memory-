@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-file_chat.py - Enhanced script for testing MemvidChat with external files
+file_chat.py - Enhanced script for testing NSMChat with external files
 
 This script allows you to:
-1. Create a memory video from your own files with configurable parameters
+1. Create a memory memory from your own files with configurable parameters
 2. Chat with the created memory using different LLM providers
 3. Store results in output/ directory to avoid contaminating the main repo
 4. Handle FAISS training issues gracefully
@@ -40,11 +40,11 @@ from pathlib import Path
 from datetime import datetime
 import json
 
-# Add the parent directory to the path so we can import memvid
+# Add the parent directory to the path so we can import nsm
 sys.path.insert(0, str(Path(__file__).parent.parent))  # Go up TWO levels from examples/
 
-from memvid import MemvidEncoder, MemvidChat
-from memvid.config import get_default_config, get_codec_parameters
+from nsm import NSMEncoder, NSMChat
+from nsm.config import get_default_config, get_codec_parameters
 
 def setup_output_dir():
     """Create output directory if it doesn't exist"""
@@ -81,10 +81,10 @@ def collect_files_from_directory(directory_path, extensions=None):
 
     return [str(f) for f in files if f.is_file()]
 
-def create_memory_with_fallback(encoder, video_path, index_path):
+def create_memory_with_fallback(encoder, memory_path, index_path):
     """Create memory with graceful FAISS fallback for training issues"""
     try:
-        build_stats = encoder.build_video(str(video_path), str(index_path))
+        build_stats = encoder.build_memory(str(memory_path), str(index_path))
         return build_stats
     except Exception as e:
         error_str = str(e)
@@ -99,7 +99,7 @@ def create_memory_with_fallback(encoder, video_path, index_path):
             try:
                 # Recreate the index manager with Flat index
                 encoder._setup_index()
-                build_stats = encoder.build_video(str(video_path), str(index_path))
+                build_stats = encoder.build_memory(str(memory_path), str(index_path))
                 print(f"✅ Successfully created memory using Flat index")
                 return build_stats
             except Exception as fallback_error:
@@ -109,7 +109,7 @@ def create_memory_with_fallback(encoder, video_path, index_path):
             raise
 
 def create_memory_from_files(files, output_dir, memory_name, **config_overrides):
-    """Create a memory video from a list of files with configurable parameters"""
+    """Create a memory memory from a list of files with configurable parameters"""
     print(f"Creating memory from {len(files)} files...")
 
     # Start timing
@@ -126,11 +126,11 @@ def create_memory_from_files(files, output_dir, memory_name, **config_overrides)
             config[key] = value
 
     # Initialize encoder with config first (this ensures config consistency)
-    encoder = MemvidEncoder(config)
+    encoder = NSMEncoder(config)
 
-    # Get the actual codec and video extension from the encoder's config
+    # Get the actual codec and memory extension from the encoder's config
     actual_codec = encoder.config.get("codec")  # Use encoder's resolved codec
-    video_ext = get_codec_parameters(actual_codec).get("video_file_type", "mp4")
+    memory_ext = get_codec_parameters(actual_codec).get("memory_file_type", "mp4")
 
     # Import tqdm for progress bars
     try:
@@ -201,43 +201,43 @@ def create_memory_from_files(files, output_dir, memory_name, **config_overrides)
     if processed_count == 0:
         raise ValueError("No files were successfully processed")
 
-    # Build the video (video_ext already determined from encoder config)
-    video_path = output_dir / f"{memory_name}.{video_ext}"
+    # Build the memory (memory_ext already determined from encoder config)
+    memory_path = output_dir / f"{memory_name}.{memory_ext}"
     index_path = output_dir / f"{memory_name}_index.json"
 
-    print(f"\n🎬 Building memory video: {video_path}")
+    print(f"\n🎬 Building memory memory: {memory_path}")
     print(f"📊 Total chunks to encode: {len(encoder.chunks)}")
 
     encoding_start = time.time()
 
     # Use fallback-enabled build function
-    build_stats = create_memory_with_fallback(encoder, video_path, index_path)
+    build_stats = create_memory_with_fallback(encoder, memory_path, index_path)
 
     encoding_time = time.time() - encoding_start
     total_time = time.time() - start_time
 
     # Enhanced statistics
     print(f"\n🎉 Memory created successfully!")
-    print(f"  📁 Video: {video_path}")
+    print(f"  📁 Memory: {memory_path}")
     print(f"  📋 Index: {index_path}")
     print(f"  📊 Chunks: {build_stats.get('total_chunks', 'unknown')}")
     print(f"  🎞️  Frames: {build_stats.get('total_frames', 'unknown')}")
-    print(f"  📏 Video size: {video_path.stat().st_size / (1024 * 1024):.1f} MB")
+    print(f"  📏 Memory size: {memory_path.stat().st_size / (1024 * 1024):.1f} MB")
     print(f"  ⏱️  Encoding time: {encoding_time:.2f} seconds")
     print(f"  ⏱️  Total time: {total_time:.2f} seconds")
 
-    if build_stats.get('video_size_mb', 0) > 0:
+    if build_stats.get('memory_size_mb', 0) > 0:
         # Calculate rough compression stats
         total_chars = sum(len(chunk) for chunk in encoder.chunks)
         original_size_mb = total_chars / (1024 * 1024)  # Rough estimate
-        compression_ratio = original_size_mb / build_stats['video_size_mb'] if build_stats['video_size_mb'] > 0 else 0
+        compression_ratio = original_size_mb / build_stats['memory_size_mb'] if build_stats['memory_size_mb'] > 0 else 0
         print(f"  📦 Estimated compression ratio: {compression_ratio:.1f}x")
 
     # Save metadata about this memory
     metadata = {
         'created': datetime.now().isoformat(),
         'source_files': files,
-        'video_path': str(video_path),
+        'memory_path': str(memory_path),
         'index_path': str(index_path),
         'config_used': config,
         'processing_stats': {
@@ -256,7 +256,7 @@ def create_memory_from_files(files, output_dir, memory_name, **config_overrides)
 
     print(f"  📄 Metadata: {metadata_path}")
 
-    return str(video_path), str(index_path)
+    return str(memory_path), str(index_path)
 
 def load_existing_memory(memory_path):
     """Load and validate existing memory from the output directory"""
@@ -265,20 +265,20 @@ def load_existing_memory(memory_path):
     # Handle different input formats
     if memory_path.is_dir():
         # Directory provided, look for memory files
-        # Try all possible video extensions
-        video_files = []
+        # Try all possible memory extensions
+        memory_files = []
         for ext in ['mp4', 'avi', 'mkv']:
-            video_files.extend(memory_path.glob(f"*.{ext}"))
+            memory_files.extend(memory_path.glob(f"*.{ext}"))
 
-        if not video_files:
-            raise ValueError(f"No video files found in {memory_path}")
+        if not memory_files:
+            raise ValueError(f"No memory files found in {memory_path}")
 
-        video_path = video_files[0]
+        memory_path = memory_files[0]
         # Look for corresponding index file
         possible_index_paths = [
-            video_path.with_name(video_path.stem + '_index.json'),
-            video_path.with_suffix('.json'),
-            video_path.with_suffix('_index.json')
+            memory_path.with_name(memory_path.stem + '_index.json'),
+            memory_path.with_suffix('.json'),
+            memory_path.with_suffix('_index.json')
         ]
 
         index_path = None
@@ -288,33 +288,33 @@ def load_existing_memory(memory_path):
                 break
 
         if not index_path:
-            raise ValueError(f"No index file found for {video_path}")
+            raise ValueError(f"No index file found for {memory_path}")
 
-    elif memory_path.suffix in ['.mp4', '.avi', '.mkv']:
-        # Video file provided
-        video_path = memory_path
+    elif memory_path.suffix in ['.nsm', '.avi', '.mkv']:
+        # Memory file provided
+        memory_path = memory_path
         index_path = memory_path.with_name(memory_path.stem + '_index.json')
 
     else:
         # Assume it's a base name, try to find files
         base_path = memory_path
-        video_path = None
+        memory_path = None
 
-        # Try different video extensions
+        # Try different memory extensions
         for ext in ['mp4', 'avi', 'mkv']:
             candidate = base_path.with_suffix(f'.{ext}')
             if candidate.exists():
-                video_path = candidate
+                memory_path = candidate
                 break
 
-        if not video_path:
-            raise ValueError(f"No video file found with base name: {memory_path}")
+        if not memory_path:
+            raise ValueError(f"No memory file found with base name: {memory_path}")
 
         index_path = base_path.with_suffix('_index.json')
 
     # Validate files exist and are readable
-    if not video_path.exists():
-        raise ValueError(f"Video file not found: {video_path}")
+    if not memory_path.exists():
+        raise ValueError(f"Memory file not found: {memory_path}")
     if not index_path.exists():
         raise ValueError(f"Index file not found: {index_path}")
 
@@ -327,23 +327,23 @@ def load_existing_memory(memory_path):
     except Exception as e:
         raise ValueError(f"Index file corrupted: {e}")
 
-    # Check video file size
-    video_size_mb = video_path.stat().st_size / (1024 * 1024)
-    print(f"✅ Video file: {video_size_mb:.1f} MB")
+    # Check memory file size
+    memory_size_mb = memory_path.stat().st_size / (1024 * 1024)
+    print(f"✅ Memory file: {memory_size_mb:.1f} MB")
 
     print(f"Loading existing memory:")
-    print(f"  📁 Video: {video_path}")
+    print(f"  📁 Memory: {memory_path}")
     print(f"  📋 Index: {index_path}")
 
-    return str(video_path), str(index_path)
+    return str(memory_path), str(index_path)
 
-def start_chat_session(video_path, index_path, provider='google', model=None):
+def start_chat_session(memory_path, index_path, provider='google', model=None):
     """Start an interactive chat session"""
     print(f"\nInitializing chat with {provider}...")
 
     try:
-        chat = MemvidChat(
-            video_file=video_path,
+        chat = NSMChat(
+            memory_file=memory_path,
             index_file=index_path,
             llm_provider=provider,
             llm_model=model
@@ -420,7 +420,7 @@ def main():
     )
     input_group.add_argument(
         '--load-existing',
-        help='Load existing memory (provide path to video file or directory)'
+        help='Load existing memory (provide path to memory file or directory)'
     )
 
     # LLM options
@@ -460,7 +460,7 @@ def main():
     parser.add_argument(
         '--codec',
         choices=['h264', 'h265', 'mp4v'],
-        help='Video codec to use for compression'
+        help='Memory codec to use for compression'
     )
 
     # File processing options
@@ -479,7 +479,7 @@ def main():
     try:
         # Get or create memory
         if args.load_existing:
-            video_path, index_path = load_existing_memory(args.load_existing)
+            memory_path, index_path = load_existing_memory(args.load_existing)
         else:
             # Collect files
             if args.input_dir:
@@ -521,12 +521,12 @@ def main():
                 print(f"   Codec: {default_config.get('codec', 'h265')}")
 
             # Create memory with configuration
-            video_path, index_path = create_memory_from_files(
+            memory_path, index_path = create_memory_from_files(
                 files, output_dir, memory_name, **config_overrides
             )
 
         # Start chat session
-        success = start_chat_session(video_path, index_path, args.provider, args.model)
+        success = start_chat_session(memory_path, index_path, args.provider, args.model)
         return 0 if success else 1
 
     except Exception as e:

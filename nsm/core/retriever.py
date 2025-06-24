@@ -1,5 +1,5 @@
 """
-MemvidRetriever - Fast semantic search, QR frame extraction, and context assembly
+NSMRetriever - Fast semantic search, QR frame extraction, and context assembly
 """
 
 import json
@@ -21,20 +21,20 @@ from .config import get_default_config
 logger = logging.getLogger(__name__)
 
 
-class MemvidRetriever:
-    """Fast retrieval from QR code videos using semantic search"""
+class NSMRetriever:
+    """Fast retrieval from QR code memorys using semantic search"""
     
-    def __init__(self, video_file: str, index_file: str, 
+    def __init__(self, memory_file: str, index_file: str, 
                  config: Optional[Dict[str, Any]] = None):
         """
-        Initialize MemvidRetriever
+        Initialize NSMRetriever
         
         Args:
-            video_file: Path to QR code video
+            memory_file: Path to QR code memory
             index_file: Path to index file
             config: Optional configuration
         """
-        self.video_file = str(Path(video_file).absolute())
+        self.memory_file = str(Path(memory_file).absolute())
         self.index_file = str(Path(index_file).absolute())
         self.config = config or get_default_config()
         
@@ -46,22 +46,22 @@ class MemvidRetriever:
         self._frame_cache = {}
         self._cache_size = self.config["retrieval"]["cache_size"]
         
-        # Verify video file
-        self._verify_video()
+        # Verify memory file
+        self._verify_memory()
         
         logger.info(f"Initialized retriever with {self.index_manager.get_stats()['total_chunks']} chunks")
     
-    def _verify_video(self):
-        """Verify video file is accessible"""
-        cap = cv2.VideoCapture(self.video_file)
+    def _verify_memory(self):
+        """Verify memory file is accessible"""
+        cap = cv2.MemoryCapture(self.memory_file)
         if not cap.isOpened():
-            raise ValueError(f"Cannot open video file: {self.video_file}")
+            raise ValueError(f"Cannot open memory file: {self.memory_file}")
         
         self.total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         self.fps = cap.get(cv2.CAP_PROP_FPS)
         cap.release()
         
-        logger.info(f"Video has {self.total_frames} frames at {self.fps} fps")
+        logger.info(f"Memory has {self.total_frames} frames at {self.fps} fps")
     
     def search(self, query: str, top_k: int = 5) -> List[str]:
         """
@@ -135,7 +135,7 @@ class MemvidRetriever:
             return self._frame_cache[frame_number]
         
         # Decode frame
-        result = extract_and_decode_cached(self.video_file, frame_number)
+        result = extract_and_decode_cached(self.memory_file, frame_number)
         
         # Update cache
         if result and len(self._frame_cache) < self._cache_size:
@@ -169,7 +169,7 @@ class MemvidRetriever:
         # Decode uncached frames in parallel
         max_workers = self.config["retrieval"]["max_workers"]
         decoded = batch_extract_and_decode(
-            self.video_file, 
+            self.memory_file, 
             uncached_frames, 
             max_workers=max_workers
         )
@@ -278,7 +278,7 @@ class MemvidRetriever:
     def get_stats(self) -> Dict[str, Any]:
         """Get retriever statistics"""
         return {
-            "video_file": self.video_file,
+            "memory_file": self.memory_file,
             "total_frames": self.total_frames,
             "fps": self.fps,
             "cache_size": len(self._frame_cache),

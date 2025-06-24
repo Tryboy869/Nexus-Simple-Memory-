@@ -1,18 +1,18 @@
 """
-Tests for MemvidRetriever
+Tests for NSMRetriever
 """
 
 import pytest
 import tempfile
 import os
 
-from memvid import MemvidEncoder, MemvidRetriever
+from nsm import NSMEncoder, NSMRetriever
 
 
 @pytest.fixture
 def setup_test_memory():
-    """Create test video and index"""
-    encoder = MemvidEncoder()
+    """Create test memory and index"""
+    encoder = NSMEncoder()
     chunks = [
         "Quantum computing uses qubits for parallel processing",
         "Machine learning models require large datasets",
@@ -23,27 +23,27 @@ def setup_test_memory():
     encoder.add_chunks(chunks)
     
     with tempfile.TemporaryDirectory() as temp_dir:
-        video_file = os.path.join(temp_dir, "test.mp4")
+        memory_file = os.path.join(temp_dir, "test.nsm")
         index_file = os.path.join(temp_dir, "test_index.json")
         
-        encoder.build_video(video_file, index_file, show_progress=False)
+        encoder.build_memory(memory_file, index_file, show_progress=False)
         
-        yield video_file, index_file, chunks
+        yield memory_file, index_file, chunks
 
 
 def test_retriever_initialization(setup_test_memory):
     """Test retriever initialization"""
-    video_file, index_file, chunks = setup_test_memory
+    memory_file, index_file, chunks = setup_test_memory
     
-    retriever = MemvidRetriever(video_file, index_file)
-    assert retriever.video_file == video_file
+    retriever = NSMRetriever(memory_file, index_file)
+    assert retriever.memory_file == memory_file
     assert retriever.total_frames == len(chunks)
 
 
 def test_search(setup_test_memory):
     """Test semantic search"""
-    video_file, index_file, chunks = setup_test_memory
-    retriever = MemvidRetriever(video_file, index_file)
+    memory_file, index_file, chunks = setup_test_memory
+    retriever = NSMRetriever(memory_file, index_file)
     
     # Search for quantum
     results = retriever.search("quantum physics", top_k=3)
@@ -58,8 +58,8 @@ def test_search(setup_test_memory):
 
 def test_search_with_metadata(setup_test_memory):
     """Test search with metadata"""
-    video_file, index_file, chunks = setup_test_memory
-    retriever = MemvidRetriever(video_file, index_file)
+    memory_file, index_file, chunks = setup_test_memory
+    retriever = NSMRetriever(memory_file, index_file)
     
     results = retriever.search_with_metadata("blockchain", top_k=2)
     assert len(results) <= 2
@@ -75,8 +75,8 @@ def test_search_with_metadata(setup_test_memory):
 
 def test_get_chunk_by_id(setup_test_memory):
     """Test getting specific chunk"""
-    video_file, index_file, chunks = setup_test_memory
-    retriever = MemvidRetriever(video_file, index_file)
+    memory_file, index_file, chunks = setup_test_memory
+    retriever = NSMRetriever(memory_file, index_file)
     
     # Get first chunk
     chunk = retriever.get_chunk_by_id(0)
@@ -90,8 +90,8 @@ def test_get_chunk_by_id(setup_test_memory):
 
 def test_cache_operations(setup_test_memory):
     """Test cache functionality"""
-    video_file, index_file, chunks = setup_test_memory
-    retriever = MemvidRetriever(video_file, index_file)
+    memory_file, index_file, chunks = setup_test_memory
+    retriever = NSMRetriever(memory_file, index_file)
     
     # Initial cache should be empty
     assert len(retriever._frame_cache) == 0
@@ -107,8 +107,8 @@ def test_cache_operations(setup_test_memory):
 
 def test_retriever_stats(setup_test_memory):
     """Test retriever statistics"""
-    video_file, index_file, chunks = setup_test_memory
-    retriever = MemvidRetriever(video_file, index_file)
+    memory_file, index_file, chunks = setup_test_memory
+    retriever = NSMRetriever(memory_file, index_file)
     
     stats = retriever.get_stats()
     assert stats["total_frames"] == len(chunks)

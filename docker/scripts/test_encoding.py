@@ -135,13 +135,13 @@ def test_ffmpeg_executor():
             if probe_result.returncode == 0:
                 try:
                     probe_data = json.loads(probe_result.stdout)
-                    video_stream = next((s for s in probe_data['streams'] if s['codec_type'] == 'video'), None)
-                    if video_stream:
-                        print(f"   ✅ Video codec: {video_stream.get('codec_name', 'unknown')}")
-                        print(f"   ✅ Frames: {video_stream.get('nb_frames', 'unknown')}")
-                        print(f"   ✅ Resolution: {video_stream.get('width')}x{video_stream.get('height')}")
+                    memory_stream = next((s for s in probe_data['streams'] if s['codec_type'] == 'memory'), None)
+                    if memory_stream:
+                        print(f"   ✅ Memory codec: {memory_stream.get('codec_name', 'unknown')}")
+                        print(f"   ✅ Frames: {memory_stream.get('nb_frames', 'unknown')}")
+                        print(f"   ✅ Resolution: {memory_stream.get('width')}x{memory_stream.get('height')}")
                     else:
-                        print(f"   ⚠️  No video stream found in probe data")
+                        print(f"   ⚠️  No memory stream found in probe data")
                 except json.JSONDecodeError:
                     print(f"   ⚠️  Could not parse ffprobe output")
             else:
@@ -235,8 +235,8 @@ def main():
 
     print("\n🎉 All Docker encoding tests passed!")
     print("\n💡 Ready to use:")
-    print("   encoder = MemvidEncoder()")
-    print("   encoder.build_video('output.mkv', 'index.json', codec='h265')")
+    print("   encoder = NSMEncoder()")
+    print("   encoder.build_memory('output.mkv', 'index.json', codec='h265')")
 
     return True
 

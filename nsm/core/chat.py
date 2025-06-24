@@ -1,5 +1,5 @@
 """
-MemvidChat - Enhanced conversational interface with multi-provider LLM support
+NSMChat - Enhanced conversational interface with multi-provider LLM support
 """
 
 import json
@@ -10,18 +10,18 @@ from datetime import datetime
 from pathlib import Path
 
 from .llm_client import LLMClient
-from .retriever import MemvidRetriever
+from .retriever import NSMRetriever
 from .config import get_default_config
 
 logger = logging.getLogger(__name__)
 
 
-class MemvidChat:
-    """Enhanced MemvidChat with multi-provider LLM support"""
+class NSMChat:
+    """Enhanced NSMChat with multi-provider LLM support"""
 
     def __init__(
             self,
-            video_file: str,
+            memory_file: str,
             index_file: str,
             llm_provider: str = 'google',
             llm_model: str = None,
@@ -30,24 +30,24 @@ class MemvidChat:
             retriever_kwargs: Dict = None
     ):
         """
-        Initialize MemvidChat with flexible LLM provider support
+        Initialize NSMChat with flexible LLM provider support
 
         Args:
-            video_file: Path to the video memory file
+            memory_file: Path to the memory memory file
             index_file: Path to the index JSON file
             llm_provider: LLM provider ('openai', 'google', 'anthropic')
             llm_model: Model name (uses provider defaults if None)
             llm_api_key: API key (uses environment variables if None)
             config: Optional configuration dictionary
-            retriever_kwargs: Additional arguments for MemvidRetriever
+            retriever_kwargs: Additional arguments for NSMRetriever
         """
-        self.video_file = video_file
+        self.memory_file = memory_file
         self.index_file = index_file
         self.config = config or get_default_config()
 
         # Initialize retriever
         retriever_kwargs = retriever_kwargs or {}
-        self.retriever = MemvidRetriever(video_file, index_file, self.config)
+        self.retriever = NSMRetriever(memory_file, index_file, self.config)
 
         # Initialize LLM client
         try:
@@ -91,7 +91,7 @@ class MemvidChat:
 
     def _get_default_system_prompt(self) -> str:
         """Get the default system prompt"""
-        return """You are a helpful AI assistant with access to a knowledge base stored in video format. 
+        return """You are a helpful AI assistant with access to a knowledge base stored in memory format. 
 
 When answering questions:
 1. Use the provided context from the knowledge base when relevant
@@ -137,7 +137,7 @@ The context will be provided with each query based on semantic similarity to the
                 return "Sorry, I encountered an error generating a response."
 
     def _get_context(self, query: str, max_tokens: int = 2000) -> str:
-        """Retrieve relevant context from the video memory"""
+        """Retrieve relevant context from the memory memory"""
         try:
             # Use the existing retriever's search method
             context_chunks = self.retriever.search(query, top_k=self.context_chunks)
@@ -309,7 +309,7 @@ User question: {message}"""
             'system_prompt': self.system_prompt,
             'llm_provider': self.llm_provider,
             'conversation': self.conversation_history,
-            'video_file': self.video_file,
+            'memory_file': self.memory_file,
             'index_file': self.index_file,
             'timestamp': datetime.now().isoformat(),
             'stats': self.get_stats()
@@ -349,7 +349,7 @@ User question: {message}"""
             'messages_exchanged': len(self.conversation_history),
             'llm_provider': self.llm_provider,
             'llm_available': self.llm_client is not None,
-            'video_file': self.video_file,
+            'memory_file': self.memory_file,
             'index_file': self.index_file,
             'context_chunks_per_query': self.context_chunks,
             'max_history': self.max_history
@@ -357,20 +357,20 @@ User question: {message}"""
 
 
 # Backwards compatibility aliases
-def chat_with_memory(video_file: str, index_file: str, api_key: str = None,
+def chat_with_memory(memory_file: str, index_file: str, api_key: str = None,
                      provider: str = 'google', model: str = None):
     """
     Quick chat function for backwards compatibility
 
     Args:
-        video_file: Path to video memory file
+        memory_file: Path to memory memory file
         index_file: Path to index file
         api_key: LLM API key
         provider: LLM provider
         model: LLM model
     """
-    chat = MemvidChat(
-        video_file=video_file,
+    chat = NSMChat(
+        memory_file=memory_file,
         index_file=index_file,
         llm_provider=provider,
         llm_model=model,
@@ -380,13 +380,13 @@ def chat_with_memory(video_file: str, index_file: str, api_key: str = None,
     chat.interactive_chat()
 
 
-def quick_chat(video_file: str, index_file: str, message: str,
+def quick_chat(memory_file: str, index_file: str, message: str,
                provider: str = 'google', api_key: str = None) -> str:
     """
     Quick single message chat
 
     Args:
-        video_file: Path to video memory file
+        memory_file: Path to memory memory file
         index_file: Path to index file
         message: Message to send
         provider: LLM provider
@@ -395,8 +395,8 @@ def quick_chat(video_file: str, index_file: str, message: str,
     Returns:
         Response from the assistant
     """
-    chat = MemvidChat(
-        video_file=video_file,
+    chat = NSMChat(
+        memory_file=memory_file,
         index_file=index_file,
         llm_provider=provider,
         llm_api_key=api_key

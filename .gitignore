@@ -1,27 +1,48 @@
-.env
-.DS_Store
-.memvid/
-output/
-prompt.memvid
-
-USAGE.md
-
-CLAUDE.md
-
-# Ignore built distributions and old package versions
-dist/
-memvid.egg-info/
-*.egg-info/
-*.whl
-*.tar.gz
-
-# Ignore Python cache files
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Ignore build artifacts from previous versions
-memvid/__pycache__/
-memvid.egg-info/
-memvid.egg-info/*
-dist/memvid-*/
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
 
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# NSM specific
+*.nsm
+test_data/
+logs/
+temp/
+
+# Tokens and keys
+.env
+config.local.json

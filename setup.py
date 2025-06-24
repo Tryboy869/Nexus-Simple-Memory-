@@ -1,63 +1,66 @@
 from setuptools import setup, find_packages
+import os
 
-with open("README.md", "r", encoding="utf-8") as fh:
-    long_description = fh.read()
+# Lire le README
+def read_readme():
+    try:
+        with open("README.md", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "NSM - Nexus Simple Memory"
 
 setup(
-    name="memvid",
-    version="0.1.3",
-    author="Saleban Olow",
-    author_email="olow30@gmail.com",
-    description="Video-based AI memory library for fast semantic search and retrieval",
-    long_description=long_description,
+    name="nsm",
+    version="1.0.0",
+    description="Nexus Simple Memory - Stockage compressé intelligent avec recherche sémantique",
+    long_description=read_readme(),
     long_description_content_type="text/markdown",
-    url="https://github.com/olow304/memvid",
-    packages=find_packages(exclude=["tests", "tests.*", "examples", "examples.*"]),
+    author="NSM Team",
+    author_email="dev@nsm.com",
+    url="https://github.com/Tryboy869/Nexus-Simple-Memory-",
+    packages=find_packages(),
+    install_requires=[
+        "sentence-transformers>=2.2.0",
+        "faiss-cpu>=1.7.0",
+        "cryptography>=3.4.0",
+        "brotli>=1.0.0",
+        "zstandard>=0.15.0",
+        "PyNaCl>=1.4.0",
+        "click>=8.0.0",
+        "numpy>=1.21.0",
+        "scikit-learn>=1.0.0",
+    ],
+    extras_require={
+        "dev": [
+            "pytest>=6.0.0",
+            "black>=22.0.0",
+            "flake8>=4.0.0",
+        ],
+        "gpu": [
+            "faiss-gpu>=1.7.0",
+        ]
+    },
+    entry_points={
+        'console_scripts': [
+            'nsm=nsm.cli.main:main',
+        ],
+    },
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-        "Topic :: Scientific/Engineering :: Artificial Intelligence",
-        "Topic :: Multimedia :: Video",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Topic :: System :: Archiving :: Compression",
+        "Topic :: Text Processing :: Indexing",
     ],
     python_requires=">=3.8",
-    install_requires=[
-        "qrcode[pil]>=7.3",
-        "opencv-python>=4.5.0",
-        "opencv-contrib-python>=4.5.0",  # Includes QR decoder
-        "sentence-transformers>=2.2.0",
-        "numpy>=1.21.0,<2.0.0",
-        "tqdm>=4.50.0",
-        "faiss-cpu>=1.7.0",
-        "Pillow>=9.0.0",
-        "python-dotenv>=0.19.0",
-        "PyPDF2>=3.0.0",
-    ],
-    extras_require={
-        "dev": [
-            "pytest>=7.0.0",
-            "pytest-cov>=4.0.0",
-            "black>=23.0.0",
-            "flake8>=6.0.0",
-        ],
-        "llm": [
-            "openai>=1.0.0",
-            "google-generativeai>=0.8.0",
-            "anthropic>=0.52.0",
-        ],
-        "epub": [
-            "beautifulsoup4>=4.0.0",
-            "ebooklib>=0.18",
-        ],
-        "web": [
-            "fastapi>=0.100.0",
-            "gradio>=4.0.0",
-        ],
+    keywords="compression, search, ai, nlp, storage, memory",
+    project_urls={
+        "Bug Reports": "https://github.com/Tryboy869/Nexus-Simple-Memory-/issues",
+        "Source": "https://github.com/Tryboy869/Nexus-Simple-Memory-",
     },
 )

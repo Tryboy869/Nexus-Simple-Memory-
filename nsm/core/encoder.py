@@ -519,4 +519,4 @@ class NSMEncoder:
             "total_chunks": len(self.chunks),
             "total_characters": sum(len(chunk) for chunk in self.chunks),
             "avg_chunk_size": np.mean([len(chunk) for chunk in self.chunks]) if self.chunks else 0,
- 
+            }

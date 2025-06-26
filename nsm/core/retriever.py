@@ -1,174 +1,116 @@
 """
-NSMRetriever - Fast semantic search, QR frame extraction, and context assembly
+NSMRetriever - Récupérateur pour Nexus Simple Memory
 """
-
 import json
-import logging
-from pathlib import Path
-from typing import List, Dict, Any, Tuple, Optional
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import time
-from functools import lru_cache
-import cv2
+import os
+from typing import List, Tuple, Dict, Any
 
-from .utils import (
-    extract_frame, decode_qr, batch_extract_and_decode,
-    extract_and_decode_cached
-)
-from .index import IndexManager
-from .config import get_default_config
-
-logger = logging.getLogger(__name__)
-
+# Imports locaux
+from .utils import cosine_similarity, SimpleEmbedding
+from ..compression.advanced import NSMCompressor
+from ..core.format import NSMFormat
 
 class NSMRetriever:
-    """Fast retrieval from QR code memorys using semantic search"""
+    def __init__(self, nsm_file_path: str):
+        self.nsm_file_path = nsm_file_path
+        self.nsm_format = NSMFormat()
+        self.compressor = NSMCompressor()
+        
+        # Charger les données
+        self.chunks = []
+        self.embeddings = []
+        self.embedding_model = SimpleEmbedding()
+        self.metadata = {}
+        
+        self._load_nsm_file()
     
-    def __init__(self, memory_file: str, index_file: str, 
-                 config: Optional[Dict[str, Any]] = None):
-        self.memory_file = str(Path(memory_file).absolute())
-        self.index_file = str(Path(index_file).absolute())
-        self.config = config or get_default_config()
-        
-        self.index_manager = IndexManager(self.config)
-        self.index_manager.load(str(Path(index_file).with_suffix('')))
-        
-        self._frame_cache = {}
-        self._cache_size = self.config["retrieval"]["cache_size"]
-        
-        self._verify_memory()
-        
-        logger.info(f"Initialized retriever with {self.index_manager.get_stats()['total_chunks']} chunks")
+    def _load_nsm_file(self):
+        """Charge le fichier NSM"""
+        try:
+            # Lire le fichier NSM
+            compressed_data, index, metadata = self.nsm_format.read_nsm_file(self.nsm_file_path)
+            self.metadata = metadata
+            
+            # Décompresser
+            algorithm = index.get('algorithm', 'none')
+            decompressed_data = self.compressor.decompress(compressed_data, algorithm)
+            
+            # Parser les données
+            data = json.loads(decompressed_data.decode('utf-8'))
+            self.chunks = data.get('chunks', [])
+            self.embeddings = data.get('embeddings', [])
+            
+            # Reconstruire le modèle d'embedding
+            if self.chunks:
+                texts = [chunk['text'] for chunk in self.chunks]
+                self.embedding_model.fit(texts)
+            
+            print(f"✅ NSM chargé: {len(self.chunks)} chunks")
+            
+        except Exception as e:
+            print(f"❌ Erreur chargement NSM: {e}")
+            raise
     
-    def _verify_memory(self):
-        cap = cv2.MemoryCapture(self.memory_file)
-        if not cap.isOpened():
-            raise ValueError(f"Cannot open memory file: {self.memory_file}")
+    def search(self, query: str, top_k: int = 5, threshold: float = 0.3) -> List[Tuple[str, float]]:
+        """Recherche sémantique dans le fichier NSM"""
+        if not self.chunks or not self.embeddings:
+            return []
         
-        self.total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        self.fps = cap.get(cv2.CAP_PROP_FPS)
-        cap.release()
+        # Créer l'embedding de la requête
+        query_embedding = self.embedding_model.transform(query)
         
-        logger.info(f"Memory has {self.total_frames} frames at {self.fps} fps")
-    
-    def search(self, query: str, top_k: int = 5) -> List[str]:
-        start_time = time.time()
-        search_results = self.index_manager.search(query, top_k)
-        frame_numbers = list(set(result[2]["frame"] for result in search_results))
-        decoded_frames = self._decode_frames_parallel(frame_numbers)
+        # Calculer les similarités
+        similarities = []
+        for i, chunk_embedding in enumerate(self.embeddings):
+            similarity = cosine_similarity(query_embedding, chunk_embedding)
+            if similarity >= threshold:
+                similarities.append((i, similarity))
+        
+        # Trier par similarité décroissante
+        similarities.sort(key=lambda x: x[1], reverse=True)
+        
+        # Retourner les top_k résultats
         results = []
-        for chunk_id, distance, metadata in search_results:
-            frame_num = metadata["frame"]
-            if frame_num in decoded_frames:
-                try:
-                    chunk_data = json.loads(decoded_frames[frame_num])
-                    results.append(chunk_data["text"])
-                except (json.JSONDecodeError, KeyError):
-                    results.append(metadata["text"])
-            else:
-                results.append(metadata["text"])
-        elapsed = time.time() - start_time
-        logger.info(f"Search completed in {elapsed:.3f}s for query: '{query[:50]}...'")
+        for i, similarity in similarities[:top_k]:
+            chunk_text = self.chunks[i]['text']
+            results.append((chunk_text, similarity))
+        
         return results
     
-    def get_chunk_by_id(self, chunk_id: int) -> Optional[str]:
-        metadata = self.index_manager.get_chunk_by_id(chunk_id)
-        if metadata:
-            frame_num = metadata["frame"]
-            decoded = self._decode_single_frame(frame_num)
-            if decoded:
-                try:
-                    chunk_data = json.loads(decoded)
-                    return chunk_data["text"]
-                except (json.JSONDecodeError, KeyError):
-                    pass
-            return metadata["text"]
-        return None
+    def get_chunk_by_id(self, chunk_id: str) -> Dict[str, Any]:
+        """Récupère un chunk par son ID"""
+        for chunk in self.chunks:
+            if chunk['id'] == chunk_id:
+                return chunk
+        return {}
     
-    def _decode_single_frame(self, frame_number: int) -> Optional[str]:
-        if frame_number in self._frame_cache:
-            return self._frame_cache[frame_number]
-        result = extract_and_decode_cached(self.memory_file, frame_number)
-        if result and len(self._frame_cache) < self._cache_size:
-            self._frame_cache[frame_number] = result
-        return result
+    def get_all_chunks(self) -> List[Dict[str, Any]]:
+        """Retourne tous les chunks"""
+        return self.chunks
     
-    def _decode_frames_parallel(self, frame_numbers: List[int]) -> Dict[int, str]:
-        results = {}
-        uncached_frames = []
-        for frame_num in frame_numbers:
-            if frame_num in self._frame_cache:
-                results[frame_num] = self._frame_cache[frame_num]
-            else:
-                uncached_frames.append(frame_num)
-        if not uncached_frames:
-            return results
-        max_workers = self.config["retrieval"]["max_workers"]
-        decoded = batch_extract_and_decode(self.memory_file, uncached_frames, max_workers=max_workers)
-        for frame_num, data in decoded.items():
-            results[frame_num] = data
-            if len(self._frame_cache) < self._cache_size:
-                self._frame_cache[frame_num] = data
-        return results
+    def extract_all(self, output_dir: str):
+        """Extrait tout le contenu vers un répertoire"""
+        os.makedirs(output_dir, exist_ok=True)
+        
+        for chunk in self.chunks:
+            # Créer un nom de fichier basé sur l'ID du chunk
+            filename = f"{chunk['id']}.txt"
+            filepath = os.path.join(output_dir, filename)
+            
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(f"Source: {chunk.get('source', 'Unknown')}\n")
+                f.write(f"Chunk Index: {chunk.get('chunk_index', 0)}\n")
+                f.write("-" * 50 + "\n")
+                f.write(chunk['text'])
+        
+        print(f"✅ {len(self.chunks)} chunks extraits vers {output_dir}")
     
-    def search_with_metadata(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
-        start_time = time.time()
-        search_results = self.index_manager.search(query, top_k)
-        frame_numbers = list(set(result[2]["frame"] for result in search_results))
-        decoded_frames = self._decode_frames_parallel(frame_numbers)
-        results = []
-        for chunk_id, distance, metadata in search_results:
-            frame_num = metadata["frame"]
-            if frame_num in decoded_frames:
-                try:
-                    chunk_data = json.loads(decoded_frames[frame_num])
-                    text = chunk_data["text"]
-                except (json.JSONDecodeError, KeyError):
-                    text = metadata["text"]
-            else:
-                text = metadata["text"]
-            results.append({
-                "text": text,
-                "score": 1.0 / (1.0 + distance),
-                "chunk_id": chunk_id,
-                "frame": frame_num,
-                "metadata": metadata
-            })
-        elapsed = time.time() - start_time
-        logger.info(f"Search with metadata completed in {elapsed:.3f}s")
-        return results
-    
-    def get_context_window(self, chunk_id: int, window_size: int = 2) -> List[str]:
-        chunks = []
-        for offset in range(-window_size, window_size + 1):
-            target_id = chunk_id + offset
-            chunk = self.get_chunk_by_id(target_id)
-            if chunk:
-                chunks.append(chunk)
-        return chunks
-    
-    def prefetch_frames(self, frame_numbers: List[int]):
-        to_prefetch = [f for f in frame_numbers if f not in self._frame_cache]
-        if to_prefetch:
-            logger.info(f"Prefetching {len(to_prefetch)} frames...")
-            decoded = self._decode_frames_parallel(to_prefetch)
-            logger.info(f"Prefetched {len(decoded)} frames")
-    
-    def clear_cache(self):
-        self._frame_cache.clear()
-        extract_and_decode_cached.cache_clear()
-        logger.info("Cleared frame cache")
-    
-    def get_stats(self) -> Dict[str, Any]:
+    def get_info(self) -> Dict[str, Any]:
+        """Retourne les informations sur le fichier NSM"""
         return {
-            "memory_file": self.memory_file,
-            "total_frames": self.total_frames,
-            "fps": self.fps,
-            "cache_size": len(self._frame_cache),
-            "max_cache_size": self._cache_size,
-            "index_stats": self.index_manager.get_stats()
+            'file_path': self.nsm_file_path,
+            'chunks_count': len(self.chunks),
+            'metadata': self.metadata,
+            'total_text_size': sum(len(chunk['text']) for chunk in self.chunks),
+            'embedding_model': self.metadata.get('embedding_model', 'unknown')
         }
-
-    def get_all_chunks(self) -> List[str]:
-        """Retourne tous les chunks stockés"""
-        return getattr(self, 'chunks', [])

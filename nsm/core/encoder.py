@@ -213,7 +213,7 @@ class NSMEncoder:
             qr_image.save(frame_path)
 
         created_frames = list(frames_dir.glob("frame_*.png"))
-        print(f"🐛 FRAMES: {len(created_frames)} files in {frames_dir}")
+        print(f"馃悰 FRAMES: {len(created_frames)} files in {frames_dir}")
 
         logger.info(f"Generated {len(self.chunks)} QR frames in {frames_dir}")
         return frames_dir
@@ -268,17 +268,17 @@ class NSMEncoder:
         thread_count = min(os.cpu_count() or 4, 16)
         cmd.extend(['-threads', str(thread_count)])
 
-        print(f"🎬 FFMPEG ENCODING SUMMARY:")
-        print(f"   🎥 Codec Config:")
-        print(f"      • codec: {codec}")
-        print(f"      • file_type: {codec_config.get('memory_file_type', 'unknown')}")
-        print(f"      • fps: {codec_config.get('fps', 'default')}")
-        print(f"      • crf: {codec_config.get('crf', 'default')}")
-        print(f"      • height: {codec_config.get('frame_height', 'default')}")
-        print(f"      • width: {codec_config.get('frame_width', 'default')}")
-        print(f"      • preset: {codec_config.get('memory_preset', 'default')}")
-        print(f"      • pix_fmt: {codec_config.get('pix_fmt', 'default')}")
-        print(f"      • extra_ffmpeg_args: {codec_config.get('extra_ffmpeg_args', 'default')}")
+        print(f"馃幀 FFMPEG ENCODING SUMMARY:")
+        print(f"   馃帴 Codec Config:")
+        print(f"      鈥� codec: {codec}")
+        print(f"      鈥� file_type: {codec_config.get('memory_file_type', 'unknown')}")
+        print(f"      鈥� fps: {codec_config.get('fps', 'default')}")
+        print(f"      鈥� crf: {codec_config.get('crf', 'default')}")
+        print(f"      鈥� height: {codec_config.get('frame_height', 'default')}")
+        print(f"      鈥� width: {codec_config.get('frame_width', 'default')}")
+        print(f"      鈥� preset: {codec_config.get('memory_preset', 'default')}")
+        print(f"      鈥� pix_fmt: {codec_config.get('pix_fmt', 'default')}")
+        print(f"      鈥� extra_ffmpeg_args: {codec_config.get('extra_ffmpeg_args', 'default')}")
 
         # Add codec-specific parameters from config
         if codec_config.get("extra_ffmpeg_args"):
@@ -383,7 +383,7 @@ class NSMEncoder:
         # Use full codec mapping
         from .config import codec_parameters
 
-        print(f"🐛 FFMPEG: frames={frames_dir} → docker_mount={frames_dir.parent}")
+        print(f"馃悰 FFMPEG: frames={frames_dir} 鈫� docker_mount={frames_dir.parent}")
 
         cmd = self._build_ffmpeg_command(frames_dir, output_file, codec)
 
@@ -519,58 +519,4 @@ class NSMEncoder:
             "total_chunks": len(self.chunks),
             "total_characters": sum(len(chunk) for chunk in self.chunks),
             "avg_chunk_size": np.mean([len(chunk) for chunk in self.chunks]) if self.chunks else 0,
-            "docker_status": docker_status,
-            "supported_codecs": list(self.config["codec_parameters"].keys()),
-            "config": self.config
-        }
-
-    def get_docker_status(self) -> str:
-        """Get Docker backend status message"""
-        if not self.dcker_mngr:
-            return "Docker backend disabled"
-        return self.dcker_mngr.get_status_message()
-
-    @classmethod
-    def from_file(cls, file_path: str, chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP,
-                  config: Optional[Dict[str, Any]] = None) -> 'NSMEncoder':
-        """
-        Create encoder from text file
-
-        Args:
-            file_path: Path to text file
-            chunk_size: Target chunk size
-            overlap: Overlap between chunks
-            config: Optional configuration
-
-        Returns:
-            NSMEncoder instance with chunks loaded
-        """
-        encoder = cls(config)
-
-        with open(file_path, 'r', encoding='utf-8') as f:
-            text = f.read()
-
-        encoder.add_text(text, chunk_size, overlap)
-        return encoder
-
-    @classmethod
-    def from_documents(cls, documents: List[str], chunk_size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAULT_OVERLAP,
-                       config: Optional[Dict[str, Any]] = None) -> 'NSMEncoder':
-        """
-        Create encoder from list of documents
-
-        Args:
-            documents: List of document strings
-            chunk_size: Target chunk size
-            overlap: Overlap between chunks
-            config: Optional configuration
-
-        Returns:
-            NSMEncoder instance with chunks loaded
-        """
-        encoder = cls(config)
-
-        for doc in documents:
-            encoder.add_text(doc, chunk_size, overlap)
-
-        return encoder
+ 

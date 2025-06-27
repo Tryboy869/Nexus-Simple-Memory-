@@ -1,55 +1,56 @@
+
 # Nexus Simple Memory (NSM)
 
-Ce dépôt contient le code pour le Produit Minimum Viable (MVP) de Nexus Simple Memory, un outil de stockage compressé, intelligent et auto-indexé.
+Ce dépôt contient le code pour le Produit Minimum Viable (MVP) de **Nexus Simple Memory**, un outil universel de stockage compressé, intelligent et ultra-léger.
 
-## 🎯 Objectif
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue.svg)](https://www.python.org/)
 
-Transformer n'importe quel ensemble de fichiers en une archive `.nsm` unique, compacte et interrogeable, en local, sans dépendre d'un service cloud.
+## 🎯 Objectif du Projet
+
+L'objectif est de remplacer le stockage lourd et dispersé par un format de fichier `.nsm` unique qui est :
+- **Compressé** : Pour économiser de l'espace.
+- **Portable** : Un seul fichier facile à déplacer, sauvegarder ou partager.
+- **Auto-indexé** : Permet une recherche par mot-clé ultra-rapide.
+- **Intelligent** : Permet une recherche sémantique (par sens) pour trouver l'information pertinente même sans les bons mots-clés.
+- **Souverain** : L'utilisateur garde le contrôle total de ses données. NSM n'est pas un service cloud.
 
 ## ⚙️ Fonctionnalités du MVP
 
-* **Création d'archive** : `nsm_cli.py <archive.nsm> init`
-* **Ajout de données** : `nsm_cli.py <archive.nsm> add <chemin/vers/dossier/ou/fichier>`
-* **Liste du contenu** : `nsm_cli.py <archive.nsm> list`
-* **Extraction de données** : `nsm_cli.py <archive.nsm> extract <dossier_de_sortie>`
-* **Recherche par mot-clé** : `nsm_cli.py <archive.nsm> search "mon mot"`
-* **Recherche sémantique (par sens)** : `nsm_cli.py <archive.nsm> search-semantic "une phrase qui décrit ce que je cherche"`
+Ce script en ligne de commande (`nsm_cli.py`) supporte les opérations suivantes :
 
-## 🚀 Installation
+| Commande | Description |
+|---|---|
+| `init` | Crée une nouvelle archive `.nsm` vide. |
+| `add` | Ajoute un fichier ou un dossier entier à l'archive. |
+| `list` | Affiche la liste des fichiers contenus dans l'archive avec leurs stats. |
+| `extract` | Extrait un ou tous les fichiers de l'archive vers un dossier. |
+| `search` | Effectue une recherche par mot-clé (rapide, basée sur FTS5). |
+| `search-semantic` | Effectue une recherche sémantique par similarité de sens. |
 
-1.  Clonez ce dépôt :
+## 🚀 Guide de Démarrage Rapide
+
+1.  **Clonez ce dépôt :**
     ```bash
     git clone [https://github.com/](https://github.com/)Tryboy869/Nexus-Simple-Memory-.git
     cd Nexus-Simple-Memory-
     ```
 
-2.  (Optionnel mais recommandé) Créez un environnement virtuel :
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # Sur Linux/macOS
-    # .\venv\Scripts\activate # Sur Windows
-    ```
-
-3.  Installez les dépendances :
+2.  **Installez les dépendances :**
     ```bash
     pip install -r requirements.txt
     ```
 
-## 📝 Exemples d'utilisation
+3.  **Utilisez l'outil :**
+    ```bash
+    # Créez une archive pour vos projets
+    python nsm_cli.py mes_projets.nsm init
 
-```bash
-# 1. Créer une nouvelle archive
-python nsm_cli.py ma_base.nsm init
+    # Ajoutez un dossier
+    python nsm_cli.py mes_projets.nsm add ./mon_code_source
 
-# 2. Ajouter un dossier de projet
-python nsm_cli.py ma_base.nsm add ./mon_code_source
+    # Cherchez une fonction spécifique par mot-clé
+    python nsm_cli.py mes_projets.nsm search "database connection"
 
-# 3. Lister les fichiers archivés
-python nsm_cli.py ma_base.nsm list
-
-# 4. Rechercher tous les fichiers parlant de "base de données"
-python nsm_cli.py ma_base.nsm search "base de données"
-
-# 5. Rechercher des fichiers similaires à l'idée "comment optimiser les requêtes"
-python nsm_cli.py ma_base.nsm search-semantic "comment optimiser les requêtes sql"
-```
+    # Cherchez des concepts sémantiquement
+    python nsm_cli.py mes_projets.nsm search-semantic "une fonction qui gère l'authentification des utilisateurs"
+    ```

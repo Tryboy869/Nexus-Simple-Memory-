@@ -1,18 +1,4 @@
-# Core dependencies
-sentence-transformers>=2.2.0
-faiss-cpu>=1.7.0
-cryptography>=3.4.0
-brotli>=1.0.0
-zstandard>=0.15.0
-PyNaCl>=1.4.0
-click>=8.0.0
-numpy>=1.21.0
-scikit-learn>=1.0.0
-
-# Optional GPU support
-# faiss-gpu>=1.7.0
-
-# Development dependencies (optional)
-# pytest>=6.0.0
-# black>=22.0.0
-# flake8>=4.0.0
+zstandard
+sentence-transformers
+faiss-cpu
+numpy

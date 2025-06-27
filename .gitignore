@@ -1,48 +1,28 @@
+
 # Python
 __pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
+*.pyc
+*.pyo
+*.pyd
+*build/
+*develop-eggs/
+*dist/
+*downloads/
+*eggs/
 *.egg-info/
-.installed.cfg
+*lib/
+*lib64/
+*parts/
+*sdist/
+*var/
+*wheels/
 *.egg
-MANIFEST
-
-# Virtual environments
+instance/
+*.env
+.venv/
+env/
 venv/
 ENV/
-env/
-.venv/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-
-# NSM specific
+# Fichiers d'archive NSM
 *.nsm
-test_data/
-logs/
-temp/
-
-# Tokens and keys
-.env
-config.local.json

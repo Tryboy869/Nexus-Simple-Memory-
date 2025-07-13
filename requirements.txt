@@ -1,5 +1,0 @@
-
-zstandard
-sentence-transformers
-faiss-cpu
-numpy
